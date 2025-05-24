@@ -1,0 +1,140 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0; padding: 0; background-color: #2c3e50; color: #ecf0f1;
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    min-height: 100vh; overflow: hidden;
+}
+
+#game-container {
+    display: grid;
+    grid-template-areas:
+        "top-ui top-ui"
+        "party-hud battlefield-view"
+        "hotbar hotbar";
+    grid-template-columns: 260px 1fr; 
+    grid-template-rows: auto 1fr auto;
+    gap: 10px; padding: 15px; background-color: #34495e; border-radius: 8px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.6); width: 95%; max-width: 1400px;
+    height: 90vh; max-height: 850px; 
+}
+
+/* --- Top UI & Target Frames --- */
+#top-ui-bar { grid-area: top-ui; display: flex; justify-content: center; padding: 5px; background-color: #2c3e50; border-radius: 4px; }
+#target-frames { display: flex; gap: 20px; }
+.target-frame { background-color: #4a6178; padding: 8px 12px; border-radius: 5px; border: 1px solid #5d7a99; min-width: 220px; font-size: 0.9em; }
+.target-frame span { display: block; margin-bottom: 3px; font-weight: bold; }
+.health-bar-wrapper { position: relative; }
+.mini-health-bar { height: 14px !important; font-size: 0.75em !important; }
+.mini-health-bar .health-bar, .mini-health-bar .shield-bar { line-height: 14px; }
+
+/* --- Party HUD --- */
+#party-hud { grid-area: party-hud; background-color: #4a6178; padding: 10px; border-radius: 5px; overflow-y: auto; }
+#party-hud h2 { margin-top: 0; text-align: center; color: #bdc3c7; font-size: 1.2em; margin-bottom: 8px;}
+#party-frames .party-member { background-color: #5d7a99; border: 1px solid #708cae; padding: 8px; margin-bottom: 6px; border-radius: 4px; cursor: pointer; transition: background-color 0.2s, border-color 0.2s; position: relative; }
+#party-frames .party-member.selected { background-color: #3498db; border-color: #2980b9; color: white; }
+#party-frames .party-member.selected h4, #party-frames .party-member.selected .threat-value { color: white; }
+#party-frames .party-member h4 { margin: 0 0 4px 0; font-size: 0.9em; }
+
+/* --- Resource Bars (Health, Shield, Mana) --- */
+.resource-bar-container { 
+    width: 100%; 
+    background-color: #1f2b38; 
+    border-radius: 3px; 
+    height: 18px; /* Default height for party frames */
+    margin-top: 4px; 
+    position: relative; 
+    overflow: hidden; 
+}
+.health-bar-container { height: 20px; } /* Original health bar height */
+.mana-bar-container { height: 12px; background-color: #1a2531; } /* Slightly different background for mana */
+
+.health-bar, .shield-bar, .mana-bar {
+    height: 100%; 
+    width: 100%; /* Default to full */
+    border-radius: 3px; 
+    transition: width 0.2s ease-in-out, background-color 0.2s; 
+    display: flex; align-items: center; justify-content: center; 
+    font-size: 0.8em; color: white; text-shadow: 1px 1px 1px black;
+    position: absolute; top: 0; left: 0;
+}
+
+.health-bar { background-color: #27ae60; z-index: 1; }
+.health-bar.low { background-color: #c0392b; }
+.health-bar.medium { background-color: #f39c12; color: black; }
+.health-bar.dead { background-color: #333 !important; color: #7f8c8d !important; font-weight: bold; letter-spacing: 1px; justify-content: center; align-items: center; display:flex; font-size: 0.9em; }
+.shield-bar { background-color: rgba(52, 152, 219, 0.7); width: 0%; z-index: 2; }
+.mana-bar { background-color: #3498db; z-index: 1; font-size: 0.7em; }
+
+
+.status-effects { margin-top: 4px; height: 18px; display: flex; align-items: center; }
+.status-effects i { display: inline-flex; align-items:center; justify-content:center; width: 16px; height: 16px; margin-right: 3px; border-radius: 3px; font-size: 0.8em; text-align: center; line-height: 16px; color: white; padding: 1px; }
+.status-effects i.fa-seedling { background-color: #2ecc71; } 
+.status-effects i.fa-shield-heart { background-color: #3498db; } 
+.status-effects i.fa-fire-flame-curved { background-color: #e67e22; } 
+.status-effects i.fa-skull-crossbones { background-color: #7f8c8d; } 
+.status-effects span.ShieldWall { background-color: #7f8c8d; color:white; font-weight:bold; padding: 0 2px;}
+.status-effects span.DefensiveStance { background-color: #95a5a6; color:black; font-weight:bold; padding: 0 2px;}
+
+
+/* --- Scrolling Combat Text (SCT) --- */
+.sct-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 100; pointer-events: none; overflow: hidden; }
+.enemy-sct-main { top: 0; height: 100%; }
+.sct-text { position: absolute; font-size: 1.2em; font-weight: bold; text-shadow: 1px 1px 1px black, -1px -1px 1px black, 1px -1px 1px black, -1px 1px 1px black; white-space: nowrap; animation: sct-float-fade 1.5s ease-out forwards; left: 50%; transform: translateX(-50%); bottom: 60%; }
+.sct-heal { color: #2ecc71; } 
+.sct-damage { color: #e74c3c; } 
+.sct-hot { color: #1abc9c; } 
+.sct-shield { color: #3498db; } 
+.sct-dodge { color: #f1c40f; font-style: italic;}
+.sct-block { color: #bdc3c7; font-style: italic;}
+@keyframes sct-float-fade { 0% { transform: translateY(0) translateX(-50%); opacity: 1; } 100% { transform: translateY(-50px) translateX(-50%); opacity: 0; } }
+
+/* --- Battlefield & Enemy --- */
+#battlefield-view { grid-area: battlefield-view; background-color: #405469; padding: 15px; border-radius: 5px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; overflow: hidden; }
+#enemy-display-clickable-area { width: 90%; margin-bottom: 10px; cursor: pointer; border: 2px dashed transparent; border-radius: 5px; padding: 5px; position: relative; }
+#enemy-display-clickable-area.selected-enemy-target-area { border-color: #e74c3c; }
+#enemy-display { border: 1px solid #c0392b; background-color: #7f2a1f; padding: 10px; border-radius: 5px; width: 100%; text-align: center; color: #ecf0f1; position:relative; }
+#enemy-display .name { font-size: 1.2em; font-weight: bold; color: #f1c40f; }
+#enemy-display .health-bar-container { margin-top: 5px; }
+#enemy-display .enemy-mana-bar { margin-top: 3px; height: 10px !important; } /* Specific style for enemy mana bar */
+#enemy-display .enemy-mana-bar .mana-bar { font-size: 0.6em; line-height: 10px; }
+#enemy-display .enemy-special-cast { color: #e67e22; font-style: italic; margin-top: 5px; font-size: 0.9em; }
+
+/* --- Player & Casting Bar --- */
+#player-character-area { display: flex; flex-direction: column; align-items: center; width: 100%; margin-top: 10px; }
+#casting-bar-container { width: 60%; max-width: 250px; background-color: #1f2b38; border: 1px solid #2c3e50; padding: 4px; border-radius: 4px; margin-top: 8px; text-align: center; }
+#casting-spell-name { font-size: 0.8em; color: #bdc3c7; display: block; margin-bottom: 2px;}
+#casting-bar-progress { width: 0%; height: 12px; background-color: #2980b9; border-radius: 3px; transition: width 0.05s linear; }
+
+/* --- Combat Log --- */
+#combat-log-container { width: 90%; background-color: #1f2b38; padding: 8px; border-radius: 4px; max-height: 180px; min-height: 120px; display: flex; flex-direction: column; margin-top: auto; }
+#combat-log-container h3 { margin: 0 0 5px 0; text-align: center; font-size: 1em; color: #bdc3c7;}
+#combat-log { flex-grow: 1; overflow-y: auto; font-size: 0.85em; border: 1px solid #2c3e50; padding: 5px; background-color: #273647; }
+#combat-log p { margin: 1px 0; border-bottom: 1px solid #34495e; padding-bottom: 1px; font-size: 0.9em;}
+#combat-log p.fire-damage { color: #e67e22; }
+#combat-log p.cure { color: #2ecc71; }
+#combat-log p.ressurect { color: #f1c40f; font-weight: bold;}
+#combat-log p.enemy-special-cast { color: #e67e22; font-style: italic;}
+#combat-log p.tank-cooldown { color: #3498db; font-weight: bold; }
+
+
+/* --- Hotbar --- */
+#hotbar-area { grid-area: hotbar; background-color: rgba(44, 62, 80, 0.85); padding: 8px; border-radius: 6px 6px 0 0; display: flex; flex-direction: column; align-items: center; justify-content: center; width: fit-content; margin: 0 auto; border-top: 2px solid #5d7a99; border-left: 2px solid #5d7a99; border-right: 2px solid #5d7a99; }
+#healer-main-stats { text-align: center; margin-bottom: 5px; font-size: 0.9em;}
+#ability-buttons { display: flex; gap: 8px; }
+#ability-buttons button { background-color: #4a6178; color: #ecf0f1; border: 1px solid #5d7a99; width: 56px; height: 56px; border-radius: 4px; cursor: pointer; font-size: 1.6em; transition: background-color 0.2s, border-color 0.2s; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; padding: 5px; }
+#ability-buttons button .spell-name-tooltip { display: none; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background-color: #1f2b38; color: #ecf0f1; padding: 5px 8px; border-radius: 3px; font-size: 0.7rem; white-space: nowrap; z-index: 10; margin-bottom: 5px; }
+#ability-buttons button:hover .spell-name-tooltip { display: block; }
+#ability-buttons button .keybind-hint { position: absolute; top: 2px; right: 4px; font-size: 0.7rem; color: #bdc3c7; }
+#ability-buttons button:hover { background-color: #5d7a99; border-color: #708cae; }
+#ability-buttons button:disabled { background-color: #3a4a5b !important; color: #7f8c8d !important; cursor: not-allowed; border-color: #4a6178 !important; }
+#ability-buttons button:disabled .cooldown-overlay { display: flex !important; }
+#ability-buttons button .cooldown-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.75); color: white; display: flex; align-items: center; justify-content: center; font-size: 1rem; font-weight: bold; border-radius: 4px; pointer-events: none; display: none; }
+#ability-buttons button.out-of-mana i { color: #e74c3c; }
+#ability-buttons button.out-of-mana { border-color: #c0392b !important; }
+
+/* --- Meta Hub Styles --- */
+#meta-progression-hub { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px; background-color: #2c3e50; border: 2px solid #3498db; border-radius: 8px; text-align: center; width: 90%; max-width: 500px; margin: 20px auto; color: #ecf0f1; }
+#meta-progression-hub h2 { color: #3498db; margin-top: 0; margin-bottom: 20px; }
+#meta-progression-hub p { margin-bottom: 15px; font-size: 1.1em; }
+#meta-progression-hub button#start-new-run-button { background-color: #3498db; color: white; border: none; padding: 12px 25px; border-radius: 5px; cursor: pointer; font-size: 1.1em; font-weight: bold; transition: background-color 0.2s ease-in-out; }
+#meta-progression-hub button#start-new-run-button:hover { background-color: #2980b9; }
